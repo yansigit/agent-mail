@@ -60,6 +60,11 @@ func TestMailAttachmentsSaveContinuesPastEachKindOfFailure(t *testing.T) {
 }
 
 func TestMailAttachmentsSaveReportsAWriteFailure(t *testing.T) {
+	// A read-only directory refuses writes only to an unprivileged user; root
+	// bypasses the permission bits, so the write this test relies on succeeds.
+	if os.Geteuid() == 0 {
+		t.Skip("running as root: directory permissions do not block writes")
+	}
 	outDir := t.TempDir()
 	if err := os.Chmod(outDir, 0o500); err != nil {
 		t.Fatal(err)
