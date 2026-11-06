@@ -70,7 +70,7 @@ code lives in new packages and upstream files change only at a few hook points.
    |---|---|
    | `internal/cmd/root.go` | `ctx.Run(runCtx)` → `runSelected(ctx, runCtx)`; `kong.Parse(...)` also receives `extraKongOptions...` |
    | `internal/cmd/mcp_invoke.go` | `kctx.Run(runCtx)` → `runSelected(kctx, runCtx)` |
-   | `internal/cmd/mcp_server.go` | the tool loop ranges over `allCuratedTools()` (upstream's `curatedTools` plus ours); `newKongParser` receives `extraKongOptions...`; one filter hook for per-account capability filtering and the `account` argument |
+   | `internal/cmd/mcp_server.go` | the tool loop ranges over `allCuratedTools()` (upstream's `curatedTools` plus ours); `newKongParser` receives `extraKongOptions...`; the server implementation name comes from the branding hook; one filter hook for per-account capability filtering and the `account` argument (added in M2) |
    | `internal/config/config.go` | `const DefaultClientID` → `var DefaultClientID`, so the build can set mailmux's own Microsoft app ID (worth offering upstream as a pull request) |
 
    `runSelected`, `extraKongOptions`, the extra tools and the hook variables live in
@@ -79,8 +79,12 @@ code lives in new packages and upstream files change only at a few hook points.
 4. **New commands and global flags** (`accounts`, `setup google`, `policy`,
    `mail labels`, `--accounts`, `--sanitize-content`) are added with `kong.Embed`
    through `extraKongOptions`, not by editing upstream's `CLI` or `RootFlags` structs.
-5. **Environment variables.** Before parsing, `cmd/mailmux` copies each `MAILMUX_*`
-   variable to the matching `OLK_*` name unless that `OLK_*` name is already set.
+5. **Environment variables.** Before parsing, `cmd/mailmux` unsets every inherited
+   `OLK_*` variable (so a shell set up for olk cannot point mailmux at olk's account or
+   config directory), then copies each `MAILMUX_<X>` variable to `OLK_<X>`.
+6. **Namespace default.** `cmd/mailmux` sets `config.Namespace` itself from a
+   `main.namespace` variable that defaults to `mailmux` (overridable with `-X`), so a
+   plain `go install …/cmd/mailmux` never uses olk's namespace.
 
 ### 4.2 New packages (`internal/mux/…`)
 
@@ -527,7 +531,7 @@ gogcli and tidemail where code or logic is reused.
 
 | # | Milestone | Done when |
 |---|---|---|
-| M0 | Foundations: hook edits, `cmd/mailmux`, namespace, env mapping, `DefaultClientID` var, embedded-struct check, release skeleton | `mailmux` behaves exactly like olk under a new name; upstream tests pass unchanged |
+| M0 | Foundations: router and kong-option hooks, branding, `cmd/mailmux`, namespace, env isolation, `DefaultClientID` var, embedded-struct check, `Makefile.mailmux` and a CI build check (the MCP registry hooks land in M2 with the `account` argument; release packaging in M5) | `mailmux` behaves exactly like olk under a new name; upstream tests pass unchanged |
 | M1 | `core`, `capability`, `query`, router, `graphprov`, combined reads | Two Outlook accounts searched together with mailmux syntax |
 | M2 | `guard`, `policy`, send log and cap, recipient rules, send lock, content cleaning, `--allow-account`, `safety_status` | All safety tests pass on Outlook |
 | M3 | `imapprov`, `compose`, `autoconfig`, presets, password sign-in | Full mail command set against Dovecot and one real iCloud or Fastmail account |
