@@ -122,6 +122,21 @@ func TestRunSelected_RouterError(t *testing.T) {
 	}
 }
 
+// A router error must stop the command even when the router did not claim
+// it: falling through could run an unguarded upstream command (a send).
+func TestRunSelected_RouterErrorNotHandled(t *testing.T) {
+	resetMuxHooks(t)
+	errBoom := errors.New("boom")
+	SetRouter(&stubRouter{handled: false, err: errBoom})
+	stdout, err := runArgv(t, "version", "--json")
+	if !errors.Is(err, errBoom) {
+		t.Fatalf("err = %v, want errBoom", err)
+	}
+	if strings.Contains(stdout, `"namespace"`) {
+		t.Errorf("upstream command ran after the router failed: %q", stdout)
+	}
+}
+
 type muxPingCmd struct{}
 
 func (muxPingCmd) Run(*RunContext) error {

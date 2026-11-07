@@ -72,6 +72,20 @@ make test && make -f Makefile.mailmux build
 Conflicts should appear only at the hook lines above. If upstream changes one of those
 call sites, re-apply the hook in the new code.
 
+## Requirements carried into M1
+
+- **Shortcut commands.** The hidden shortcuts in `internal/cmd/desire_paths.go`
+  (`send`, `ls`, `inbox`, `search`, `today`, `week`) call their inner command's `Run`
+  directly, so a router sees the shortcut's path (`send`), not the full one
+  (`mail send`). The router must map each shortcut to its full command, with a test
+  that each shortcut reaches the same handler; otherwise `send` would skip the guard
+  layer.
+- **Embed exported types only.** The untrusted-text wrapper skips fields of an
+  unexported embedded struct while `encoding/json` still prints them, so a mailmux
+  result type embedding one would print untrusted text unwrapped
+  (`internal/outfmt/mux_embedded_test.go`). M1 adds a reflection test over every mux
+  result type.
+
 ## Known limitations
 
 - About 19 user-facing messages from upstream still say `olk …`, for example

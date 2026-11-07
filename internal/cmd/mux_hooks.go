@@ -10,7 +10,9 @@ import "github.com/alecthomas/kong"
 // instead of the upstream command's Run method.
 type Router interface {
 	// Route returns handled=true when it served the command, in which case err
-	// is the command's result and the upstream Run method is not called.
+	// is the command's result and the upstream Run method is not called. Any
+	// non-nil err stops the command, whatever handled says: a router that
+	// failed must never fall through to an unguarded upstream command.
 	Route(kctx *kong.Context, rc *RunContext) (handled bool, err error)
 }
 
@@ -38,7 +40,8 @@ func withExtraOptions(base ...kong.Option) []kong.Option {
 // takes it, otherwise through the command's own Run method.
 func runSelected(kctx *kong.Context, rc *RunContext) error {
 	if router != nil {
-		if handled, err := router.Route(kctx, rc); handled {
+		handled, err := router.Route(kctx, rc)
+		if err != nil || handled {
 			return err
 		}
 	}
