@@ -23,10 +23,10 @@ type Client struct {
 	TenantID string `json:"tenant_id,omitempty"`
 }
 
-const (
-	DefaultClientID = "51e726d0-22a4-45f7-a71c-b472ff84c027"
-	DefaultTenantID = "common"
-)
+// DefaultClientID is a variable so a build can set its own app ID.
+var DefaultClientID = "51e726d0-22a4-45f7-a71c-b472ff84c027"
+
+const DefaultTenantID = "common"
 
 // Load reads config from disk
 func Load() (*Config, error) {
