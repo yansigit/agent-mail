@@ -1,0 +1,41 @@
+# Build file for mailmux, the multi-provider build of olk. Use with
+#   make -f Makefile.mailmux <target>
+# The upstream Makefile keeps building olk. See docs/mailmux/development.md.
+
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE    ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+MODULE  = github.com/rlrghb/olkcli
+BINARY  = ./bin/mailmux
+
+# Storage namespace. A development build keeps its own config directory and
+# keychain entries; `install` always uses the release namespace, mailmux.
+NAMESPACE ?= mailmux-dev
+
+# mailmux's own Microsoft app ID. Empty keeps upstream's default until the
+# mailmux Entra app is registered (milestone M5).
+MAILMUX_CLIENT_ID ?=
+
+LDFLAGS = -s -w \
+	-X $(MODULE)/internal/cmd.Version=$(VERSION) \
+	-X $(MODULE)/internal/cmd.Commit=$(COMMIT) \
+	-X $(MODULE)/internal/cmd.Date=$(DATE) \
+	-X main.clientID=$(MAILMUX_CLIENT_ID)
+
+.PHONY: build install test lint clean
+
+build:
+	go build -ldflags '$(LDFLAGS) -X main.namespace=$(NAMESPACE)' -o $(BINARY) ./cmd/mailmux
+
+install:
+	go build -ldflags '$(LDFLAGS) -X main.namespace=mailmux' -o $(shell go env GOPATH)/bin/mailmux ./cmd/mailmux
+
+test:
+	go test -race -count=1 ./...
+
+lint:
+	golangci-lint run ./...
+
+clean:
+	rm -f $(BINARY)
