@@ -354,13 +354,13 @@ func (b *toolBinding) readOnly() bool { return b.tier == tierRead }
 // options used by Execute so the introspected model matches the real CLI. The
 // no-op Exit prevents kong from calling os.Exit on the in-process reparse path.
 func newKongParser(cli *CLI) (*kong.Kong, error) {
-	return kong.New(cli,
+	return kong.New(cli, withExtraOptions(
 		kong.Name("olk"),
 		kong.Description("Microsoft Outlook CLI - Access email, calendar, and contacts from the command line"),
 		kong.ConfigureHelp(kong.HelpOptions{Compact: true}),
 		kong.Vars{"version": Version},
 		kong.Exit(func(int) {}),
-	)
+	)...)
 }
 
 // buildMCPServer constructs an MCP server exposing the curated tools the config
