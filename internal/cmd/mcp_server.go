@@ -372,7 +372,7 @@ func buildMCPServer(cfg *mcpConfig) (*mcp.Server, []*toolBinding, error) {
 	}
 	leaves := indexLeaves(k.Model.Node)
 
-	srv := mcp.NewServer(&mcp.Implementation{Name: "olk", Version: Version}, nil)
+	srv := mcp.NewServer(&mcp.Implementation{Name: programName, Version: Version}, nil)
 
 	maxOut := cfg.maxOutputBytes
 	if maxOut <= 0 {

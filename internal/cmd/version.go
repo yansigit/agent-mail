@@ -62,7 +62,7 @@ func (c *VersionCmd) Run(ctx *RunContext) error {
 		fmt.Println(string(data))
 		return nil
 	}
-	fmt.Printf("olk %s (commit: %s, built: %s)\n", Version, Commit, Date)
+	fmt.Printf("%s %s (commit: %s, built: %s)\n", programName, Version, Commit, Date)
 	if config.Namespace != config.DefaultNamespace {
 		fmt.Printf("namespace: %s\n", config.Namespace)
 	}

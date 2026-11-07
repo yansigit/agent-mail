@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -37,6 +38,7 @@ func resetMuxHooks(t *testing.T) {
 	t.Cleanup(func() {
 		SetRouter(nil)
 		extraKongOptions = nil
+		programName = "olk"
 	})
 }
 
@@ -159,5 +161,59 @@ func TestMuxE2E_RouterServesMCPCall(t *testing.T) {
 	}
 	if got := strings.TrimSpace(resultText(res)); got != "routed" {
 		t.Errorf("tool result = %q, want the router's output", got)
+	}
+}
+
+// helpText returns the root --help output of the MCP-side parser.
+func helpText(t *testing.T) string {
+	t.Helper()
+	var buf bytes.Buffer
+	RegisterKongOptions(kong.Writers(&buf, &buf))
+	k, err := newKongParser(&CLI{})
+	if err != nil {
+		t.Fatalf("newKongParser: %v", err)
+	}
+	_, _ = k.Parse([]string{"--help"}) // the no-op Exit lets Parse return
+	return buf.String()
+}
+
+func mcpServerName(t *testing.T) string {
+	t.Helper()
+	return connectE2E(t).InitializeResult().ServerInfo.Name
+}
+
+func TestBranding_DefaultIsOlk(t *testing.T) {
+	resetMuxHooks(t)
+	stdout, err := runArgv(t, "version")
+	if err != nil {
+		t.Fatalf("version: %v", err)
+	}
+	if !strings.HasPrefix(stdout, "olk ") {
+		t.Errorf("version = %q, want it to start with \"olk \"", stdout)
+	}
+	if help := helpText(t); !strings.Contains(help, "Usage: olk") {
+		t.Errorf("help does not name olk:\n%s", help)
+	}
+	if name := mcpServerName(t); name != "olk" {
+		t.Errorf("MCP server name = %q, want olk", name)
+	}
+}
+
+func TestBranding_SetBrandingRenames(t *testing.T) {
+	resetMuxHooks(t)
+	SetBranding(Branding{Name: "mailmux", Description: "Mail for agents"})
+	stdout, err := runArgv(t, "version")
+	if err != nil {
+		t.Fatalf("version: %v", err)
+	}
+	if !strings.HasPrefix(stdout, "mailmux ") {
+		t.Errorf("version = %q, want it to start with \"mailmux \"", stdout)
+	}
+	help := helpText(t)
+	if !strings.Contains(help, "Usage: mailmux") || !strings.Contains(help, "Mail for agents") {
+		t.Errorf("help does not show the mailmux branding:\n%s", help)
+	}
+	if name := mcpServerName(t); name != "mailmux" {
+		t.Errorf("MCP server name = %q, want mailmux", name)
 	}
 }

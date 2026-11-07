@@ -44,3 +44,21 @@ func runSelected(kctx *kong.Context, rc *RunContext) error {
 	}
 	return kctx.Run(rc)
 }
+
+// programName names the program in version output and as the MCP server's
+// implementation name. Help text gets it from the kong.Name option instead.
+var programName = "olk"
+
+// Branding renames the program for a build other than olk.
+type Branding struct {
+	Name        string
+	Description string
+}
+
+// SetBranding renames the program in help, version output and the MCP
+// server's name. kong applies Name after building the model, so the
+// registered kong.Name overrides upstream's.
+func SetBranding(b Branding) {
+	programName = b.Name
+	RegisterKongOptions(kong.Name(b.Name), kong.Description(b.Description))
+}
