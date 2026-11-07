@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **mailmux fork:** read docs/mailmux/development.md before changing files outside internal/mux, cmd/mailmux or mux_*.go.
+
 This file provides context for Claude Code when working on the olk project.
 
 ## What is this project?

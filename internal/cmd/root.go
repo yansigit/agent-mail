@@ -250,7 +250,7 @@ type CLI struct {
 
 func Execute() int {
 	cli := &CLI{}
-	ctx := kong.Parse(cli,
+	ctx := kong.Parse(cli, withExtraOptions(
 		kong.Name("olk"),
 		kong.Description("Microsoft Outlook CLI - Access email, calendar, and contacts from the command line"),
 		kong.UsageOnError(),
@@ -260,7 +260,7 @@ func Execute() int {
 		kong.Vars{
 			"version": Version,
 		},
-	)
+	)...)
 
 	ctx_bg := context.Background()
 	timeout := cli.Timeout
@@ -294,7 +294,7 @@ func Execute() int {
 		return 1
 	}
 
-	err := ctx.Run(runCtx)
+	err := runSelected(ctx, runCtx)
 	if err != nil {
 		writeCommandError(cli.JSON, err, os.Stdout, os.Stderr)
 		return 1

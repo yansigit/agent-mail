@@ -78,7 +78,7 @@ func makeHandler(b *toolBinding) mcp.ToolHandler {
 			limit = defaultMaxOutputBytes
 		}
 		stdout, stderr, runErr := captureStdLimit(limit, func() error {
-			return kctx.Run(runCtx)
+			return runSelected(kctx, runCtx)
 		})
 		// Mark truncation on each stream as captured, before any trimming
 		// could bring it back under the cap and hide the cut.
